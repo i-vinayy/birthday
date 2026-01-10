@@ -75,7 +75,7 @@
         .time-box span { font-size: 1.8rem; font-weight: bold; color: var(--accent); display: block; }
         .time-box small { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Floating Happy Birthday Prachi Prachi Prachi Prachi Text */
+        /* Floating Happy Birthday Text */
         #hb-message-container { margin-top: 20px; min-height: 60px; }
         .floating-hb {
             font-family: 'Dancing Script', cursive; font-size: 3rem; color: #fff;
@@ -103,7 +103,7 @@
 
         /* --- CAROUSEL --- */
         .carousel-outer { width: 100vw; position: relative; margin: 40px 0; padding: 20px 0; overflow: hidden; z-index: 2; }
-        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; padding-left: 50px; }
+        .carousel-track { display: flex; transition: transform 0.8s ease-in-out; padding-left: 50px; }
         .carousel-item {
             flex: 0 0 300px; height: 400px; margin-right: 30px; border-radius: 20px;
             overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: transform 0.3s;
@@ -255,7 +255,7 @@
         <div id="heart-container"></div>
 
         <div class="container">
-            <h1 style="color:white; font-family:'Dancing Script'; font-size: 3rem;">Road to 25 My Princess</h1>
+            <h1 style="color:white; font-family:'Dancing Script'; font-size: 3rem;">Road to 25</h1>
             
             <div id="timer-container" class="countdown-grid">
                 <div class="time-box"><span id="d">0</span><small>Days</small></div>
@@ -293,7 +293,7 @@
             <button class="nav-btn next-btn" onclick="moveSlide(1)">&#10095;</button>
         </div>
 
-        <button class="magic-btn" onclick="goToStage3()" style="margin-bottom: 50px;">Unlock Your Gift 💖</button>
+        <button class="magic-btn" onclick="goToStage3()" style="margin-bottom: 50px;">Unlock Your Gift💖</button>
     </div>
 
     <div id="stage-reasons" class="hidden">
@@ -306,7 +306,7 @@
     </div>
 
     <div id="stage-final" class="hidden">
-        <h1>Happy Birthday Prachi Prachi Prachi Prachi 👸🎈</h1>
+        <h1>Happy Birthday 👸🎈</h1>
         <p style="color:gray; font-size:1.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); z-index:2; margin-bottom: 20px;">You are the most amazing baddie. Just Click the Cake!!</p>
         <br>
         <br>
@@ -356,9 +356,9 @@
         ];
         const reasons = [
             "Because your smile lights up my darkest days.", 
-            "Because you have the kindest heart I know.",   
+            "Because you have the kindest heart I know.",    
             "Because you make me laugh when I want to cry.",
-            "Because you are simply my everything."         
+            "Because you are simply my everything."          
         ];
 
         // Init Intro
@@ -371,19 +371,19 @@
             document.getElementById('stage-journey').classList.add('fade-in');
             startTimer();
             manageBackgroundEffects();
+            startAutoScroll(); // Start the carousel auto-scroll
         }
 
         function goToStage3() {
             document.getElementById('stage-journey').classList.add('hidden');
             stopEffects(); 
+            clearInterval(autoScrollTimer); // Stop carousel when leaving stage
             document.getElementById('stage-reasons').classList.remove('hidden');
             document.getElementById('stage-reasons').classList.add('fade-in');
         }
 
         function closeModal() {
             document.getElementById('modal-overlay').classList.add('hidden');
-            // If we are in stage 4 (Cake Click), we don't reload.
-            // If we are in stage 3 (Wait message), user likely wants to stay.
         }
 
         function goHome() {
@@ -414,7 +414,6 @@
                 document.getElementById('modal-title').innerText = "Not Yet! 🤫";
                 document.getElementById('wait-msg').innerText = randomWait;
                 document.getElementById('modal-overlay').classList.remove('hidden');
-                // Change button action to just close for this modal interaction
                 document.querySelector('#modal-overlay button').setAttribute('onclick', 'goHome()');
             }
         }
@@ -530,20 +529,63 @@
             }
         }
 
-        // --- CAROUSEL LOGIC ---
+        // --- AUTO-SCROLL CAROUSEL LOGIC ---
         let slideIndex = 0;
-        function moveSlide(direction) {
+        let autoScrollDir = 1; // 1 = Go Right, -1 = Go Left
+        let autoScrollTimer;
+
+        function updateCarouselPosition() {
             const track = document.getElementById('track');
             const items = document.querySelectorAll('.carousel-item');
-            const totalSlides = items.length;
             const itemStyle = window.getComputedStyle(items[0]);
             const itemWidth = items[0].offsetWidth + parseInt(itemStyle.marginRight);
 
-            slideIndex += direction;
-            if(slideIndex < 0) slideIndex = totalSlides - 1;
-            if(slideIndex >= totalSlides) slideIndex = 0;
             const moveAmount = slideIndex * itemWidth;
             track.style.transform = `translateX(-${moveAmount}px)`;
+        }
+
+        function moveSlide(direction) {
+            // Manual click logic
+            const items = document.querySelectorAll('.carousel-item');
+            slideIndex += direction;
+            
+            // Loop for manual clicks
+            if(slideIndex < 0) slideIndex = items.length - 1;
+            if(slideIndex >= items.length) slideIndex = 0;
+            
+            updateCarouselPosition();
+            
+            // Reset auto scroll timer if user manually clicks
+            clearInterval(autoScrollTimer);
+            startAutoScroll();
+        }
+
+        function startAutoScroll() {
+            // Clear existing to prevent duplicates
+            clearInterval(autoScrollTimer);
+            
+            autoScrollTimer = setInterval(() => {
+                const items = document.querySelectorAll('.carousel-item');
+                const totalSlides = items.length;
+
+                // Move logic
+                slideIndex += autoScrollDir;
+
+                // Ping-Pong Logic:
+                // If we reach the end, set index to last and switch direction to -1 (Left)
+                if (slideIndex >= totalSlides - 1) {
+                    slideIndex = totalSlides - 1;
+                    autoScrollDir = -1;
+                } 
+                // If we reach the start, set index to 0 and switch direction to 1 (Right)
+                else if (slideIndex <= 0) {
+                    slideIndex = 0;
+                    autoScrollDir = 1;
+                }
+
+                updateCarouselPosition();
+
+            }, 2500); // Change slide every 2.5 seconds
         }
 
         // --- TIMER ---
